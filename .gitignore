@@ -1,6 +1,3 @@
 local_secrets.py
-*.jpg
-*.png
-*.json
 *.pyc
 __pycache__
