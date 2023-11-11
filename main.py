@@ -26,9 +26,9 @@ async def bhelp(ctx):
 
     embed.set_author(name='Help')
     embed.add_field(name='!register', value='Register a bingo player (Example. !register Elf)', inline=False)
-    embed.add_field(name='!submit', value='Submit an entry for a tile. (Example. !submit 13 Elf) You can also overwrite entries with --ow tag (Example. !submit 13 Elf --ow)', inline=False)
-    embed.add_field(name='!get_all_entries', value='Get all entries for user (Example. !get_all_entries Elf)', inline=False)
-    embed.add_field(name='!get_entry', value='Register a bingo player (Example. !get_entry 13 Elf)', inline=False)
+    embed.add_field(name='!submit', value='Submit an entry for a tile. (Example. !submit 13 Elf)\nYou can also overwrite entries with --ow tag (Example. !submit 13 Elf --ow)', inline=False)
+    embed.add_field(name='!get_all', value='Get all entries for user (Example. !get_all Elf)', inline=False)
+    embed.add_field(name='!get', value='Register a bingo player (Example. !get 13 Elf)', inline=False)
 
     await ctx.send(embed=embed)
 
@@ -88,9 +88,14 @@ async def submit(ctx, tile, *args):
     if not file_exists:
         await ctx.send('Account does not exist, please use !register {name} to begin tracking.')
         return
+    
+    try:
+        img_data = requests.get(ctx.message.attachments[0].url).content
+    except Exception:
+        await ctx.send("No image provided, entry must have an image attached")
+        return
         
     # If the account exists, create a text entry of the submission
-    print(overwrite)
     try:
         create_submit_entry(path, tile, overwrite)
     except TileExistsError as e:
@@ -98,7 +103,6 @@ async def submit(ctx, tile, *args):
         return
 
     # If the account exists, create an image entry of the submission
-    img_data = requests.get(ctx.message.attachments[0].url).content
     with open(path + '/' + tile + '.jpg', 'wb') as handler:
         handler.write(img_data)
         handler.truncate()
@@ -157,7 +161,7 @@ def create_submit_entry(path, tile, overwrite=False):
 
 @client.command(pass_context=True)
 @commands.has_role('Bingo Master')
-async def get_all_entries(ctx, *args):
+async def get_all(ctx, *args):
     # Get the name from the args (can contain spaces) and form a path
     name = " ".join(args)
     path = os.path.dirname(__file__) + '/' + name
@@ -181,7 +185,7 @@ async def get_all_entries(ctx, *args):
 
 @client.command(pass_context=True)
 @commands.has_role('Bingo Master')
-async def get_entry(ctx, tile, *args):
+async def get(ctx, tile, *args):
     name = " ".join(args)
     path = os.path.dirname(__file__) + '/' + name
     file_exists = os.path.isdir(path)
@@ -202,6 +206,12 @@ async def get_entry(ctx, tile, *args):
         with open(path + '/' + tile + '.jpg', 'rb') as f:
             picture = discord.File(f)
             await ctx.channel.send(content='Name: %s\nTile: %s\nSubmitted: %s' % (name, tile, submission_time), file=picture)
+
+# TODO filter with board prefix
+
+# TODO async def remove()
+
+# TODO async def export_as_csv()
 
 
 client.run(DISCORD_API_KEY)
