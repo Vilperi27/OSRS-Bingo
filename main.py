@@ -26,7 +26,7 @@ async def bhelp(ctx):
 
     embed.set_author(name='Help')
     embed.add_field(name='!register', value='Register a bingo player (Example. !register Elf)', inline=False)
-    embed.add_field(name='!submit', value='Submit an entry for a tile (Example. !submit 13 Elf)', inline=False)
+    embed.add_field(name='!submit', value='Submit an entry for a tile. (Example. !submit 13 Elf) You can also overwrite entries with --ow tag (Example. !submit 13 Elf --ow)', inline=False)
     embed.add_field(name='!get_all_entries', value='Get all entries for user (Example. !get_all_entries Elf)', inline=False)
     embed.add_field(name='!get_entry', value='Register a bingo player (Example. !get_entry 13 Elf)', inline=False)
 
