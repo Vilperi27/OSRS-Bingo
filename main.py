@@ -82,8 +82,6 @@ async def submit(ctx, tile, *args):
     name = args_data
     overwrite = False
 
-    # !submit 10 Elf --ow --url=xxxx
-
     if "--ow" in args_data:
         args_data = args_data.replace(" --ow", "")
         overwrite = True
@@ -221,9 +219,33 @@ async def get(ctx, tile, *args):
             picture = discord.File(f)
             await ctx.channel.send(content='Name: %s\nTile: %s\nSubmitted: %s' % (name, tile, submission_time), file=picture)
 
-# TODO filter with board prefix
 
-# TODO async def remove()
+@client.command(pass_context=True)
+@commands.has_role(role)
+async def remove(ctx, tile, *args):
+    name = " ".join(args)
+    path = os.path.dirname(__file__) + '/' + name
+    file_exists = os.path.isdir(path)
+
+    if not file_exists:
+        await ctx.send('Account does not exist, please use !register {name} to begin tracking.')
+        return
+    
+    with open(path + '/entries.json', 'r') as json_file:
+        data = json.load(json_file)
+
+    for index, entry in enumerate(data['entries']):
+        if entry['tile'] == tile:
+            del data['entries'][index]
+            
+            with open(path + '/entries.json', 'w') as json_file:
+                json_string = json.dumps(data)
+                json_file.write(json_string)
+            break
+    await ctx.send('Tile ' + tile + ' removed for user ' + name)
+
+
+# TODO filter with board prefix
 
 # TODO async def export_as_csv()
 
