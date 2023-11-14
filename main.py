@@ -11,6 +11,7 @@ from errors import TileExistsError
 intents = discord.Intents.default()
 intents.message_content = True
 client = commands.Bot(command_prefix='!', intents=intents)
+role = 'Bingo Master'
 
 @client.event
 async def on_ready():
@@ -18,6 +19,7 @@ async def on_ready():
 
 
 @client.command(pass_context = True)
+@commands.has_role(role)
 async def bhelp(ctx):
 
     embed = discord.Embed(
@@ -26,14 +28,14 @@ async def bhelp(ctx):
 
     embed.set_author(name='Help')
     embed.add_field(name='!register', value='Register a bingo player (Example. !register Elf)', inline=False)
-    embed.add_field(name='!submit', value='Submit an entry for a tile. (Example. !submit 13 Elf)\nYou can also overwrite entries with --ow tag (Example. !submit 13 Elf --ow)', inline=False)
+    embed.add_field(name='!submit', value='Submit an entry for a tile. (Example. !submit 13 Elf)\nYou can also overwrite entries with --ow tag (Example. !submit 13 Elf --ow)\nIt is also possible to submit with a link to a picture. (Example. !submit 13 Elf --url=www.google.com/this.png)', inline=False)
     embed.add_field(name='!get_all', value='Get all entries for user (Example. !get_all Elf)', inline=False)
     embed.add_field(name='!get', value='Register a bingo player (Example. !get 13 Elf)', inline=False)
 
     await ctx.send(embed=embed)
 
 @client.command(pass_context=True)
-@commands.has_role('Bingo Master')
+@commands.has_role(role)
 async def register(ctx, *args):
 
     # Get the name from the args (can contain spaces)
@@ -71,16 +73,25 @@ async def register(ctx, *args):
 
 
 @client.command(pass_context=True)
-@commands.has_role('Bingo Master')
+@commands.has_role(role)
 async def submit(ctx, tile, *args):
+    custom_image_url = ""
+
     # Get the name from the args (can contain spaces) and form a path
-    name = " ".join(args)
+    args_data = " ".join(args)
+    name = args_data
     overwrite = False
 
-    if "--ow" in name:
-        split_name = name.split("--ow")
-        name = split_name[0].strip()
+    # !submit 10 Elf --ow --url=xxxx
+
+    if "--ow" in args_data:
+        args_data = args_data.replace(" --ow", "")
         overwrite = True
+
+    if "--url" in args_data:
+        split_data = args_data.split(" --url=")
+        name = split_data[0]
+        custom_image_url = split_data[1]
 
     path = os.path.dirname(__file__) + '/' + name
     file_exists = os.path.isdir(path)
@@ -90,7 +101,10 @@ async def submit(ctx, tile, *args):
         return
     
     try:
-        img_data = requests.get(ctx.message.attachments[0].url).content
+        if custom_image_url:
+            img_data = requests.get(custom_image_url).content
+        else:
+            img_data = requests.get(ctx.message.attachments[0].url).content
     except Exception:
         await ctx.send("No image provided, entry must have an image attached")
         return
@@ -160,7 +174,7 @@ def create_submit_entry(path, tile, overwrite=False):
 
 
 @client.command(pass_context=True)
-@commands.has_role('Bingo Master')
+@commands.has_role(role)
 async def get_all(ctx, *args):
     # Get the name from the args (can contain spaces) and form a path
     name = " ".join(args)
@@ -184,7 +198,7 @@ async def get_all(ctx, *args):
 
 
 @client.command(pass_context=True)
-@commands.has_role('Bingo Master')
+@commands.has_role(role)
 async def get(ctx, tile, *args):
     name = " ".join(args)
     path = os.path.dirname(__file__) + '/' + name
@@ -201,7 +215,7 @@ async def get(ctx, tile, *args):
         with open(path + '/entries.json', 'r') as json_file:
             data = json.load(json_file)
 
-        submission_time = next((entry for entry in data['entries'] if entry['tile'] == '2'), None)['submitted']
+        submission_time = next((entry for entry in data['entries'] if entry['tile'] == tile), None)['submitted']
 
         with open(path + '/' + tile + '.jpg', 'rb') as f:
             picture = discord.File(f)
