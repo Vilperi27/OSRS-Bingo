@@ -175,7 +175,15 @@ def create_submit_entry(path, tile, overwrite=False):
 @commands.has_role(role)
 async def get_all(ctx, *args):
     # Get the name from the args (can contain spaces) and form a path
-    name = " ".join(args)
+    args_data = " ".join(args)
+    name = args_data
+    filter_data = None
+
+    if "--filter" in args_data:
+        split_data = args_data.split(" --filter=")
+        name = split_data[0]
+        filter_data = split_data[1]
+
     path = os.path.dirname(__file__) + '/' + name
     file_exists = os.path.isdir(path)
     
@@ -189,10 +197,15 @@ async def get_all(ctx, *args):
 
         entries = []
         for entry in data['entries']:
+            if filter_data and filter_data not in entry['tile']:
+                continue
             entries.append(entry['tile'])
 
-        entries = ', '.join(entries)
-        await ctx.send('Entries exist for tiles: ' + entries)
+        if entries:
+            entries = ', '.join(entries)
+            await ctx.send('Entries exist for tiles: ' + entries)
+        else:
+            await ctx.send('No entries found')
 
 
 @client.command(pass_context=True)
@@ -244,8 +257,6 @@ async def remove(ctx, tile, *args):
             break
     await ctx.send('Tile ' + tile + ' removed for user ' + name)
 
-
-# TODO filter with board prefix
 
 # TODO async def export_as_csv()
 
