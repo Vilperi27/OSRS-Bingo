@@ -12,6 +12,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = commands.Bot(command_prefix='!', intents=intents)
 role = 'Lieutenant'
+authorized_ids = [201768152982487041]
 
 @client.event
 async def on_ready():
@@ -31,12 +32,14 @@ async def bhelp(ctx):
     embed.add_field(name='!submit', value='Submit an entry for a tile. (Example. !submit 13 Elf)\nYou can also overwrite entries with --ow tag (Example. !submit 13 Elf --ow)\nIt is also possible to submit with a link to a picture. (Example. !submit 13 Elf --url=www.google.com/this.png)', inline=False)
     embed.add_field(name='!get_all', value='Get all entries for user (Example. !get_all Elf)', inline=False)
     embed.add_field(name='!get', value='Register a bingo player (Example. !get 13 Elf)', inline=False)
-
     await ctx.send(embed=embed)
 
 @client.command(pass_context=True)
 @commands.has_role(role)
 async def register(ctx, *args):
+    if ctx.author.id not in authorized_ids:
+        await ctx.send("Unauthorized user")
+        return
 
     # Get the name from the args (can contain spaces)
     name = " ".join(args)
@@ -75,6 +78,10 @@ async def register(ctx, *args):
 @client.command(pass_context=True)
 @commands.has_role(role)
 async def submit(ctx, tile, *args):
+    if ctx.author.id not in authorized_ids:
+        await ctx.send("Unauthorized user")
+        return
+    
     custom_image_url = ""
 
     # Get the name from the args (can contain spaces) and form a path
@@ -236,6 +243,10 @@ async def get(ctx, tile, *args):
 @client.command(pass_context=True)
 @commands.has_role(role)
 async def remove(ctx, tile, *args):
+    if ctx.author.id not in authorized_ids:
+        await ctx.send("Unauthorized user")
+        return
+        
     name = " ".join(args)
     path = os.path.dirname(__file__) + '/' + name
     file_exists = os.path.isdir(path)
