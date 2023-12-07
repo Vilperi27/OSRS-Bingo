@@ -13,6 +13,7 @@ intents.message_content = True
 client = commands.Bot(command_prefix='!', intents=intents)
 role = 'Lieutenant'
 authorized_ids = [201768152982487041]
+base_user_folder = os.path.dirname(__file__) + '/Users/'
 
 @client.event
 async def on_ready():
@@ -45,7 +46,7 @@ async def register(ctx, *args):
     name = " ".join(args)
 
     # Form folder path with the name to track with the given username
-    path = os.path.dirname(__file__) + '/' + name 
+    path = base_user_folder + name 
     file_exists = os.path.isdir(path)
     
     if file_exists:
@@ -98,7 +99,7 @@ async def submit(ctx, tile, *args):
         name = split_data[0]
         custom_image_url = split_data[1]
 
-    path = os.path.dirname(__file__) + '/' + name
+    path = base_user_folder + name
     file_exists = os.path.isdir(path)
     
     if not file_exists:
@@ -191,7 +192,7 @@ async def get_all(ctx, *args):
         name = split_data[0]
         filter_data = split_data[1]
 
-    path = os.path.dirname(__file__) + '/' + name
+    path = base_user_folder + name
     file_exists = os.path.isdir(path)
     
     # If account exists, get all the entries from the json-file.
@@ -209,8 +210,9 @@ async def get_all(ctx, *args):
             entries.append(entry['tile'])
 
         if entries:
+            entries = sorted(entries, key=int)
             entries = ', '.join(entries)
-            await ctx.send('Entries exist for tiles: ' + entries)
+            await ctx.send('Entries for ' + name + ' exist for tiles: ' + entries)
         else:
             await ctx.send('No entries found')
 
@@ -219,7 +221,7 @@ async def get_all(ctx, *args):
 @commands.has_role(role)
 async def get(ctx, tile, *args):
     name = " ".join(args)
-    path = os.path.dirname(__file__) + '/' + name
+    path = base_user_folder + name
     file_exists = os.path.isdir(path)
     
     # If the account and entry exists, get the given entry and return the submission image
@@ -248,7 +250,7 @@ async def remove(ctx, tile, *args):
         return
         
     name = " ".join(args)
-    path = os.path.dirname(__file__) + '/' + name
+    path = base_user_folder + name
     file_exists = os.path.isdir(path)
 
     if not file_exists:
@@ -277,7 +279,9 @@ async def get_all_users(ctx, *args):
         return
         
     folders = next(os.walk('.'))[1]
-    await ctx.send(folders)
+    folders.remove('.git')
+    folders.remove('__pycache__')
+    await ctx.send('\n'.join(folders))
 
 
 # TODO async def export_as_csv()
