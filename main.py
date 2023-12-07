@@ -269,6 +269,17 @@ async def remove(ctx, tile, *args):
     await ctx.send('Tile ' + tile + ' removed for user ' + name)
 
 
+@client.command(pass_context=True)
+@commands.has_role(role)
+async def get_all_users(ctx, *args):
+    if ctx.author.id not in authorized_ids:
+        await ctx.send("Unauthorized user")
+        return
+        
+    folders = next(os.walk('.'))[1]
+    await ctx.send(folders)
+
+
 # TODO async def export_as_csv()
 
 
