@@ -29,8 +29,9 @@ async def bhelp(ctx):
     )
 
     embed.set_author(name='Help')
-    embed.add_field(name='!register', value='Register a bingo player (Example. !register Elf)', inline=False)
-    embed.add_field(name='!submit', value='Submit an entry for a tile. (Example. !submit 13 Elf)\nYou can also overwrite entries with --ow tag (Example. !submit 13 Elf --ow)\nIt is also possible to submit with a link to a picture. (Example. !submit 13 Elf --url=www.google.com/this.png)', inline=False)
+    embed.add_field(name='!register', value='(Elf only) Register a bingo player (Example. !register Elf)', inline=False)
+    embed.add_field(name='!submit', value='(Elf only) Submit an entry for a tile. (Example. !submit 13 Elf)\nYou can also overwrite entries with --ow tag (Example. !submit 13 Elf --ow)\nIt is also possible to submit with a link to a picture. (Example. !submit 13 Elf --url=www.google.com/this.png)', inline=False)
+    embed.add_field(name='!submit', value='(Elf only) Get a list of all registered users', inline=False)
     embed.add_field(name='!get_all', value='Get all entries for user (Example. !get_all Elf)', inline=False)
     embed.add_field(name='!get', value='Register a bingo player (Example. !get 13 Elf)', inline=False)
     await ctx.send(embed=embed)
