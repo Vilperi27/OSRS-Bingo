@@ -242,7 +242,6 @@ async def get_all_users(ctx, *args):
 
 
 @client.command(pass_context=True)
-@commands.has_role(role)
 async def get_board(ctx, *args):
     PRE_COMPLETED_TILE = (2, 2)
     INIT_OFFSET_X = 205
