@@ -11,6 +11,7 @@ from PIL import Image
 import requests
 from local_secrets import DISCORD_API_KEY
 from errors import TileExistsError
+from utils import get_completed_lines, create_submit_entry
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -135,55 +136,6 @@ async def submit(ctx, tile, *args):
     await ctx.send('Submission saved for account %s, Tile: %s.' % (name, tile))
 
 
-def create_submit_entry(path, tile, overwrite=False):
-    path = path + '/entries.json'
-    file_exists = os.path.isfile(path)
-
-    # If file exists, append the new entry to the json file,
-    # If no entries exist, create the json-file.
-    if file_exists:
-        with open(path, 'r') as json_file:
-            data = json.load(json_file)
-
-        tile_exists = False
-        found_tile_index = -1
-
-        for index, entry in enumerate(data['entries']):
-            if entry['tile'] == tile:
-                tile_exists = True
-                found_tile_index = index
-                break
-
-        if not overwrite and tile_exists:
-            raise TileExistsError("Tile already exists for that id. If you want to overwrite the data, use --ow (i.e. !submit 2 Elf --ow)")
-        
-        if not tile_exists:
-            data['entries'].append({
-                'tile': tile,
-                'submitted': datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-            })
-        else:
-            data['entries'][found_tile_index]['tile'] = tile
-            data['entries'][found_tile_index]['submitted'] = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-
-        with open(path, 'w') as json_file:
-            json_string = json.dumps(data)
-            json_file.write(json_string)
-    else:
-        with open(path, "a+") as f:
-            data = {
-                'entries': [
-                    {
-                        'tile': tile,
-                        'submitted': datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-                    }
-                ]
-            }
-
-            json_string = json.dumps(data)
-            f.write(json_string)
-
-
 @client.command(pass_context=True)
 @commands.has_role(role)
 async def get_all(ctx, *args):
@@ -292,7 +244,7 @@ async def get_all_users(ctx, *args):
 @client.command(pass_context=True)
 @commands.has_role(role)
 async def get_board(ctx, *args):
-
+    PRE_COMPLETED_TILE = (2, 2)
     INIT_OFFSET_X = 205
     INIT_OFFSET_Y = 574
     STEPS_X = [26, 31, 27, 30, 0]
@@ -325,11 +277,15 @@ async def get_board(ctx, *args):
             ['', '', '', '', '']
         ]
 
+        matrix[PRE_COMPLETED_TILE[0]][PRE_COMPLETED_TILE[1]] = 'X'
+
         for value in entries:
             value -= 1
             x = value % 5
             y = math.floor(value / 5)
             matrix[y][x] = 'X'
+    
+    completed_rows = get_completed_lines(matrix)
 
     image = cv2.imread('bingoboard.png')
 
@@ -340,7 +296,7 @@ async def get_board(ctx, *args):
         offset_x = INIT_OFFSET_X
         for index_c, value in enumerate(row):
             if value == 'X' or index_r == 2 and index_c == 2:
-                image = cv2.rectangle(image, (offset_x, offset_y), (offset_x + 200, offset_y + 190), (0,255,0), 6)
+                image = cv2.rectangle(image, (offset_x, offset_y), (offset_x + 200, offset_y + 190), (0,255,0), 10)
             offset_x += STEPS_X[index_c] + 200
 
         offset_y += STEPS_Y[index_r] + 190
@@ -352,6 +308,6 @@ async def get_board(ctx, *args):
         im_pil.save(image_binary, 'PNG')
         image_binary.seek(0)
         await ctx.send(file=discord.File(fp=image_binary, filename='image.png'))
-
+    await ctx.send('\n'.join(completed_rows))
 
 client.run(DISCORD_API_KEY)
