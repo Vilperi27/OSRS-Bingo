@@ -310,4 +310,84 @@ async def get_board(ctx, *args):
         await ctx.send(file=discord.File(fp=image_binary, filename='image.png'))
     await ctx.send('\n'.join(completed_rows))
 
+
+@client.command(pass_context=True)
+@commands.has_role(role)
+async def get_all_boards(ctx):
+    if ctx.author.id not in authorized_ids:
+        await ctx.send("Unauthorized user")
+        return
+        
+    players = next(os.walk('./Users/'))[1]
+    print(players)
+
+    for name in players:
+        PRE_COMPLETED_TILE = (2, 2)
+        INIT_OFFSET_X = 205
+        INIT_OFFSET_Y = 574
+        STEPS_X = [26, 31, 27, 30, 0]
+        STEPS_Y = [23, 20, 22, 23, 0]
+
+        path = base_user_folder + name
+        print(name)
+        print(path)
+        file_exists = os.path.isdir(path)
+        
+        if not file_exists:
+            await ctx.send('Account does not exist, please use !register {name} to begin tracking.')
+            return
+
+        with open(path + '/entries.json', 'r') as json_file:
+            data = json.load(json_file)
+
+            entries = []
+            for entry in data['entries']:
+                entries.append(int(entry['tile']))
+
+            if entries:
+                entries = sorted(entries, key=int)
+        
+        if entries:
+            matrix = [
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', '']
+            ]
+
+            matrix[PRE_COMPLETED_TILE[0]][PRE_COMPLETED_TILE[1]] = 'X'
+
+            for value in entries:
+                value -= 1
+                x = value % 5
+                y = math.floor(value / 5)
+                matrix[y][x] = 'X'
+        
+        completed_rows = get_completed_lines(matrix)
+
+        image = cv2.imread('bingoboard.png')
+
+        offset_x = INIT_OFFSET_X
+        offset_y = INIT_OFFSET_Y
+
+        for index_r, row in enumerate(matrix):
+            offset_x = INIT_OFFSET_X
+            for index_c, value in enumerate(row):
+                if value == 'X' or index_r == 2 and index_c == 2:
+                    image = cv2.rectangle(image, (offset_x, offset_y), (offset_x + 200, offset_y + 190), (0,255,0), 10)
+                offset_x += STEPS_X[index_c] + 200
+
+            offset_y += STEPS_Y[index_r] + 190
+        
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        im_pil = Image.fromarray(image)
+
+        with io.BytesIO() as image_binary:
+            im_pil.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            await ctx.send(name, file=discord.File(fp=image_binary, filename='image.png'))
+        await ctx.send('\n'.join(completed_rows))
+
+
 client.run(DISCORD_API_KEY)
